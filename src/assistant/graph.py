@@ -62,8 +62,14 @@ def initialize_state(state_input: SummaryStateInput, config: RunnableConfig) -> 
             print(f"Warning: Error loading JSON documents: {e}")
             # Continue without JSON documents
     
+    # Initialize all fields of SummaryState
     return SummaryState(
         research_topic=state_input.research_topic,
+        search_query=None,  # Will be set by generate_query
+        web_research_results=[],  # Empty list to start
+        sources_gathered=[],  # Empty list to start
+        research_loop_count=0,  # Start at 0
+        running_summary="",  # Empty string to start
         vector_store=vector_store
     )
 

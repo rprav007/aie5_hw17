@@ -16,21 +16,35 @@ def initialize_vector_store(config: Configuration, embeddings_model: OllamaEmbed
     Returns:
         QdrantVectorStore instance
     """
-    url = f"{config.qdrant_host}:{config.qdrant_port}"
-    
-    # Create an empty document to initialize the store
-    empty_doc = Document(
-        page_content="",
-        metadata={"type": "initialization"}
-    )
-    
-    return QdrantVectorStore.from_documents(
-        documents=[empty_doc],
-        embedding=embeddings_model,
-        url=url,
-        prefer_grpc=True,
-        collection_name="research_vectors"
-    )
+    try:
+        url = f"http://{config.qdrant_host}:{config.qdrant_port}"
+        print(f"Initializing Qdrant vector store at {url}")
+        
+        # Create an initialization document
+        init_doc = Document(
+            page_content="Vector store initialization document",
+            metadata={
+                "type": "initialization",
+                "timestamp": "initialization"
+            }
+        )
+        
+        # Initialize vector store
+        vector_store = QdrantVectorStore.from_documents(
+            documents=[init_doc],
+            embedding=embeddings_model,
+            url=url,
+            prefer_grpc=True,
+            collection_name=config.collection_name,
+            force_recreate=True  # Ensure clean initialization
+        )
+        
+        print("Vector store initialized successfully")
+        return vector_store
+        
+    except Exception as e:
+        print(f"Error initializing vector store: {e}")
+        raise  # Re-raise the exception after logging
 
 def get_embeddings_model(config: Configuration) -> OllamaEmbeddings:
     """Get the Ollama embeddings model."""

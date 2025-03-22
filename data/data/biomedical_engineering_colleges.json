@@ -1,0 +1,40 @@
+{
+    "data": [
+        {
+            "college_name": "Massachusetts Institute of Technology",
+            "location": "Cambridge, MA",
+            "program": "Biomedical Engineering",
+            "degree": "BSc",
+            "admission_requirements": "SAT/ACT, High School Diploma",
+            "website": "https://www.mit.edu",
+            "description": "MIT offers a comprehensive biomedical engineering program with cutting-edge research in medical devices and health technologies."
+        },
+        {
+            "college_name": "Stanford University",
+            "location": "Stanford, CA",
+            "program": "Bioengineering",
+            "degree": "BSc",
+            "admission_requirements": "SAT/ACT, High School Transcript",
+            "website": "https://www.stanford.edu",
+            "description": "Stanford provides a rigorous bioengineering program, emphasizing interdisciplinary learning and hands-on research."
+        },
+        {
+            "college_name": "University of California, Berkeley",
+            "location": "Berkeley, CA",
+            "program": "Bioengineering",
+            "degree": "BSc",
+            "admission_requirements": "SAT/ACT, High School Diploma",
+            "website": "https://www.berkeley.edu",
+            "description": "UC Berkeley's bioengineering program offers a blend of biology, chemistry, and engineering with extensive lab opportunities."
+        },
+        {
+            "college_name": "Johns Hopkins University",
+            "location": "Baltimore, MD",
+            "program": "Biomedical Engineering",
+            "degree": "BSc",
+            "admission_requirements": "SAT/ACT, High School Diploma",
+            "website": "https://www.jhu.edu",
+            "description": "Johns Hopkins is renowned for its biomedical engineering department, offering a program focused on innovation in healthcare technologies."
+        }
+    ]
+}

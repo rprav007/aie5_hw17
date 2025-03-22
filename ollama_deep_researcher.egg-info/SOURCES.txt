@@ -1,4 +1,3 @@
-README.md
 pyproject.toml
 ollama_deep_researcher.egg-info/PKG-INFO
 ollama_deep_researcher.egg-info/SOURCES.txt
