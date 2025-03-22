@@ -6,11 +6,66 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_ollama import ChatOllama
 from langgraph.graph import START, END, StateGraph
+from langchain_qdrant import QdrantVectorStore
+from langchain_core.documents import Document
 
 from assistant.configuration import Configuration, SearchAPI
 from assistant.utils import deduplicate_and_format_sources, tavily_search, format_sources, perplexity_search, duckduckgo_search
 from assistant.state import SummaryState, SummaryStateInput, SummaryStateOutput
 from assistant.prompts import query_writer_instructions, summarizer_instructions, reflection_instructions
+from assistant.vector_store import initialize_vector_store, get_embeddings_model, store_documents_in_vectorstore
+from assistant.document_loader import load_json_documents
+
+# Initialize embeddings model globally since it's reused
+embeddings_model = None
+
+def initialize_state(state_input: SummaryStateInput, config: RunnableConfig) -> SummaryState:
+    """Initialize the state with vector store."""
+    global embeddings_model
+    configurable = Configuration.from_runnable_config(config)
+    
+    # Initialize embeddings model first
+    embeddings_model = get_embeddings_model(configurable)
+    
+    # Initialize vector store with embeddings model
+    vector_store = initialize_vector_store(configurable, embeddings_model)
+    
+    # Load and store JSON documents if enabled
+    if configurable.load_json_on_start:
+        try:
+            json_docs = load_json_documents(
+                data_dir=configurable.json_data_dir,
+                glob_pattern=configurable.json_glob_pattern,
+                jq_schema=configurable.json_jq_schema,
+                text_content=False  # Set to False to handle dictionary content
+            )
+            if json_docs:
+                # Convert dictionary content to string for storage
+                processed_docs = []
+                for doc in json_docs:
+                    if isinstance(doc.page_content, dict):
+                        # Convert dict to formatted string
+                        content_str = json.dumps(doc.page_content, indent=2)
+                        processed_docs.append(Document(
+                            page_content=content_str,
+                            metadata=doc.metadata
+                        ))
+                    else:
+                        processed_docs.append(doc)
+                
+                store_documents_in_vectorstore(
+                    documents=processed_docs,
+                    vector_store=vector_store,
+                    metadata={"research_topic": state_input.research_topic}
+                )
+        except Exception as e:
+            print(f"Warning: Error loading JSON documents: {e}")
+            # Continue without JSON documents
+    
+    return SummaryState(
+        research_topic=state_input.research_topic,
+        vector_store=vector_store
+    )
 
 # Nodes
 def generate_query(state: SummaryState, config: RunnableConfig):
@@ -18,6 +73,14 @@ def generate_query(state: SummaryState, config: RunnableConfig):
 
     # Format the prompt
     query_writer_instructions_formatted = query_writer_instructions.format(research_topic=state.research_topic)
+
+    # Check vector store for similar research first
+    if state.vector_store:
+        similar_docs = state.vector_store.similarity_search(state.research_topic, k=1)
+        if similar_docs:
+            # Use the most relevant result to inform the query
+            context = similar_docs[0].page_content
+            query_writer_instructions_formatted += f"\n\nConsider this related research:\n{context}"
 
     # Generate a query
     configurable = Configuration.from_runnable_config(config)
@@ -56,6 +119,19 @@ def web_research(state: SummaryState, config: RunnableConfig):
         search_str = deduplicate_and_format_sources(search_results, max_tokens_per_source=1000, include_raw_content=True)
     else:
         raise ValueError(f"Unsupported search API: {configurable.search_api}")
+
+    # Store research results in vector store
+    if state.vector_store:
+        doc = Document(
+            page_content=search_str,
+            metadata={
+                "research_topic": state.research_topic,
+                "search_query": state.search_query,
+                "research_loop": state.research_loop_count,
+                "type": "web_research"
+            }
+        )
+        state.vector_store.add_documents([doc])
 
     return {"sources_gathered": [format_sources(search_results)], "research_loop_count": state.research_loop_count + 1, "web_research_results": [search_str]}
 
@@ -143,6 +219,7 @@ def route_research(state: SummaryState, config: RunnableConfig) -> Literal["fina
 
 # Add nodes and edges
 builder = StateGraph(SummaryState, input=SummaryStateInput, output=SummaryStateOutput, config_schema=Configuration)
+builder.add_node("initialize", initialize_state)
 builder.add_node("generate_query", generate_query)
 builder.add_node("web_research", web_research)
 builder.add_node("summarize_sources", summarize_sources)
@@ -150,7 +227,8 @@ builder.add_node("reflect_on_summary", reflect_on_summary)
 builder.add_node("finalize_summary", finalize_summary)
 
 # Add edges
-builder.add_edge(START, "generate_query")
+builder.add_edge(START, "initialize")
+builder.add_edge("initialize", "generate_query")
 builder.add_edge("generate_query", "web_research")
 builder.add_edge("web_research", "summarize_sources")
 builder.add_edge("summarize_sources", "reflect_on_summary")

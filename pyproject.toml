@@ -16,13 +16,19 @@ dependencies = [
     "duckduckgo-search>=7.3.0",
     "beautifulsoup4>=4.13.3",
     "jupyter>=1.1.1",
+    "qdrant-client>=1.7.0",
+    "langchain-qdrant>=0.1.0",
+    "jq>=1.6.0",
 ]
 
 [project.optional-dependencies]
-dev = ["mypy>=1.11.1", "ruff>=0.6.1"]
+dev = [
+    "mypy>=1.11.1",
+    "ruff>=0.6.1",
+]
 
 [build-system]
-requires = ["setuptools>=73.0.0", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -35,25 +41,30 @@ packages = ["assistant"]
 "*" = ["py.typed"]
 
 [tool.ruff]
-lint.select = [
-    "E",    # pycodestyle
-    "F",    # pyflakes
-    "I",    # isort
-    "D",    # pydocstyle
-    "D401", # First line should be in imperative mood
-    "T201",
-    "UP",
-]
-lint.ignore = [
-    "UP006",
-    "UP007",
-    "UP035",
-    "D417",
-    "E501",
+line-length = 120
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
 ]
 
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["D", "UP"]
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+disallow_untyped_defs = true
 
-[tool.ruff.lint.pydocstyle]
-convention = "google"
+[[tool.mypy.overrides]]
+module = [
+    "langchain.*",
+    "langgraph.*",
+    "tavily.*",
+    "duckduckgo_search.*",
+]
+ignore_missing_imports = true

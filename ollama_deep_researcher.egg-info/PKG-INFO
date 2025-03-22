@@ -1,4 +1,4 @@
-Metadata-Version: 2.2
+Metadata-Version: 2.4
 Name: ollama-deep-researcher
 Version: 0.0.1
 Summary: Lightweight web research and summarization assistant.
@@ -13,6 +13,9 @@ Requires-Dist: langchain-ollama>=0.2.1
 Requires-Dist: duckduckgo-search>=7.3.0
 Requires-Dist: beautifulsoup4>=4.13.3
 Requires-Dist: jupyter>=1.1.1
+Requires-Dist: qdrant-client>=1.7.0
+Requires-Dist: langchain-qdrant>=0.1.0
+Requires-Dist: jq>=1.6.0
 Provides-Extra: dev
 Requires-Dist: mypy>=1.11.1; extra == "dev"
 Requires-Dist: ruff>=0.6.1; extra == "dev"
@@ -20,17 +23,6 @@ Requires-Dist: ruff>=0.6.1; extra == "dev"
 # Ollama Deep Researcher
 
 Ollama Deep Researcher is a fully local web research assistant that uses any LLM hosted by [Ollama](https://ollama.com/search). Give it a topic and it will generate a web search query, gather web search results (via [Tavily](https://www.tavily.com/) by default), summarize the results of web search, reflect on the summary to examine knowledge gaps, generate a new search query to address the gaps, search, and improve the summary for a user-defined number of cycles. It will provide the user a final markdown summary with all sources used.
-
-![research-rabbit](https://github.com/user-attachments/assets/4308ee9c-abf3-4abb-9d1e-83e7c2c3f187)
-
-Short summary:
-<video src="https://github.com/user-attachments/assets/02084902-f067-4658-9683-ff312cab7944" controls></video>
-
-## 📺 Video Tutorials
-
-See it in action or build it yourself? Check out these helpful video tutorials:
-- [Overview of Ollama Deep Researcher with R1](https://www.youtube.com/watch?v=sGUjmyfof4Q) - Load and test [DeepSeek R1](https://api-docs.deepseek.com/news/news250120) [distilled models](https://ollama.com/library/deepseek-r1).
-- [Building Ollama Deep Researcher from Scratch](https://www.youtube.com/watch?v=XGuTzHoqlj8) - Overview of how this is built.
 
 ## 🚀 Quickstart
 
@@ -43,36 +35,7 @@ See it in action or build it yourself? Check out these helpful video tutorials:
 ollama pull deepseek-r1:8b
 ```
 
-3. Clone the repository:
-```bash
-git clone https://github.com/langchain-ai/ollama-deep-researcher.git
-cd ollama-deep-researcher
-```
-
-4. Select a web search tool:
-
-By default, it will use [DuckDuckGo](https://duckduckgo.com/) for web search, which does not require an API key. But you can also use [Tavily](https://tavily.com/) or [Perplexity](https://www.perplexity.ai/hub/blog/introducing-the-sonar-pro-api) by adding their API keys to the environment file:
-```bash
-cp .env.example .env
-```
-
-The following environment variables are supported:
-
-  * `OLLAMA_BASE_URL` - the endpoint of the Ollama service, defaults to `http://localhost:11434` if not set 
-  * `OLLAMA_MODEL` - the model to use, defaults to `llama3.2` if not set
-  * `SEARCH_API` - the search API to use, either `duckduckgo` (default) or `tavily` or `perplexity`. You need to set the corresponding API key if tavily or perplexity is used.
-  * `TAVILY_API_KEY` - the tavily API key to use
-  * `PERPLEXITY_API_KEY` - the perplexity API key to use
-  * `MAX_WEB_RESEARCH_LOOPS` - the maximum number of research loop steps, defaults to `3`
-  * `FETCH_FULL_PAGE` - fetch the full page content if using `duckduckgo` for the search API, defaults to `false`
-
-5. (Recommended) Create a virtual environment:
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
-
-6. Launch the assistant with the LangGraph server:
+3. Launch the assistant with the LangGraph server:
 
 ```bash
 # Install uv package manager
@@ -94,25 +57,11 @@ ollama pull deepseek-r1:8b
 git clone https://github.com/langchain-ai/ollama-deep-researcher.git
 cd ollama-deep-researcher
 ```
- 
-4. Select a web search tool, as above.
 
-5. (Recommended) Create a virtual environment: Install `Python 3.11` (and add to PATH during installation). Restart your terminal to ensure Python is available, then create and activate a virtual environment:
+4. Launch the assistant with the LangGraph server:
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-```
-
-6. Launch the assistant with the LangGraph server:
-
-```powershell
-# Install dependencies
-pip install -e .
-pip install langgraph-cli[inmem]
-
-# Start the LangGraph server
-langgraph dev
+uv run langgraph dev
 ```
 
 ### Using the LangGraph Studio UI

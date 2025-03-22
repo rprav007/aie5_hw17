@@ -5,6 +5,9 @@ langchain-ollama>=0.2.1
 duckduckgo-search>=7.3.0
 beautifulsoup4>=4.13.3
 jupyter>=1.1.1
+qdrant-client>=1.7.0
+langchain-qdrant>=0.1.0
+jq>=1.6.0
 
 [dev]
 mypy>=1.11.1
